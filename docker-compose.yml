@@ -28,8 +28,8 @@ services:
   mail:
     image: mailhog/mailhog:latest
     container_name: open_loyalty_mail
-    ports:
-      - "8186:8025"
+    expose:
+      - "8025"
 
   php:
     container_name: open_loyalty_backend
@@ -51,6 +51,8 @@ services:
       MAIL_PORT: 1025
     volumes:
       - ./backend:/var/www/openloyalty/backend
+    expose:
+      - "9000"
 
   nginx:
     container_name: open_loyalty_frontend
@@ -59,11 +61,11 @@ services:
       dockerfile: Dockerfile.nginx
     depends_on:
       - php
-    ports:
-      - "8080:80"
-      - "8182:3001"
-      - "8183:3002"
-      - "8184:3003"
+    expose:
+      - "80"
+      - "3001"
+      - "3002"
+      - "3003"
     volumes:
       - ./backend:/var/www/openloyalty/backend
       - ./frontend:/var/www/openloyalty/frontend
