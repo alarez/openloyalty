@@ -9,6 +9,8 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-openloyalty}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - openloyalty
 
   elk:
     image: elasticsearch:7.17.10
@@ -17,9 +19,13 @@ services:
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
     volumes:
       - elk_data:/usr/share/elasticsearch/data
+    networks:
+      - openloyalty
 
   mail:
     image: mailhog/mailhog:latest
+    networks:
+      - openloyalty
 
   php:
     build:
@@ -37,6 +43,8 @@ services:
       MAIL_HOST: mail
     volumes:
       - ./backend:/var/www/openloyalty/backend
+    networks:
+      - openloyalty
 
   nginx:
     build:
@@ -47,6 +55,16 @@ services:
     volumes:
       - ./backend:/var/www/openloyalty/backend
       - ./frontend:/var/www/openloyalty/frontend
+    networks:
+      - openloyalty
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.openloyalty-api.rule=Host(`${DOMAIN:-localhost}`)"
+      - "traefik.http.services.openloyalty-api.loadbalancer.server.port=8080"
+
+networks:
+  openloyalty:
+    driver: bridge
 
 volumes:
   postgres_data:
