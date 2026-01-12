@@ -3,22 +3,15 @@ version: "3.8"
 services:
   db:
     image: postgres:15-alpine
-    container_name: open_loyalty_db
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-openloyalty}
       POSTGRES_USER: ${POSTGRES_USER:-openloyalty}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-openloyalty}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-openloyalty}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
   elk:
     image: elasticsearch:7.17.10
-    container_name: open_loyalty_elk
     environment:
       - discovery.type=single-node
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
@@ -27,18 +20,13 @@ services:
 
   mail:
     image: mailhog/mailhog:latest
-    container_name: open_loyalty_mail
-    expose:
-      - "8025"
 
   php:
-    container_name: open_loyalty_backend
     build:
       context: .
       dockerfile: Dockerfile.php
     depends_on:
-      db:
-        condition: service_healthy
+      - db
     environment:
       DATABASE_HOST: db
       DATABASE_PORT: 5432
@@ -46,26 +34,16 @@ services:
       DATABASE_USER: ${POSTGRES_USER:-openloyalty}
       DATABASE_PASSWORD: ${POSTGRES_PASSWORD:-openloyalty}
       ELASTICSEARCH_HOST: elk
-      ELASTICSEARCH_PORT: 9200
       MAIL_HOST: mail
-      MAIL_PORT: 1025
     volumes:
       - ./backend:/var/www/openloyalty/backend
-    expose:
-      - "9000"
 
   nginx:
-    container_name: open_loyalty_frontend
     build:
       context: .
       dockerfile: Dockerfile.nginx
     depends_on:
       - php
-    expose:
-      - "8080"
-      - "3001"
-      - "3002"
-      - "3003"
     volumes:
       - ./backend:/var/www/openloyalty/backend
       - ./frontend:/var/www/openloyalty/frontend
